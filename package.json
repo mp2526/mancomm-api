@@ -1,0 +1,15 @@
+{
+  "name": "mancomm-service",
+  "dependencies": {
+    "@aws-sdk/client-docdb": "3.569.0",
+    "axios": "1.6.8",
+    "mongodb": "6.6.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.20.2",
+    "serverless-esbuild": "1.52.1",
+    "serverless-functions-base-path": "1.0.33",
+    "serverless-offline": "13.5.0",
+    "serverless-vpc-plugin": "1.0.6"
+  }
+}

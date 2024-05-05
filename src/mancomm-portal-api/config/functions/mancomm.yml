@@ -1,0 +1,96 @@
+getDocs:
+  handler: mancomm-handler.getDocs
+  events:
+    - httpApi:
+        path: /v1/docs
+        method: get
+
+getTitles:
+  handler: mancomm-handler.getTitles
+  timeout: 29
+  vpc:
+    securityGroupIds:
+      - sg-05d87901ab73aadcd
+    subnetIds:
+      - subnet-031b7c29933630637
+      - subnet-0800c3b7ada3484f8
+      - subnet-05a88013af6fa1872
+      - subnet-059a80def7d2afbd9
+      - subnet-0cd15f43cc0ab8157
+      - subnet-09bfc943b3168ff09
+  events:
+    - httpApi:
+        path: /v1/titles
+        method: get
+
+getTitle:
+  handler: mancomm-handler.getTitle
+  timeout: 29
+  vpc:
+    securityGroupIds:
+      - sg-05d87901ab73aadcd
+    subnetIds:
+      - subnet-031b7c29933630637
+      - subnet-0800c3b7ada3484f8
+      - subnet-05a88013af6fa1872
+      - subnet-059a80def7d2afbd9
+      - subnet-0cd15f43cc0ab8157
+      - subnet-09bfc943b3168ff09
+  events:
+    - httpApi:
+        path: /v1/title/{id}
+        method: get
+
+saveTitle:
+  handler: mancomm-handler.saveTitle
+  timeout: 29
+  vpc:
+    securityGroupIds:
+      - sg-05d87901ab73aadcd
+    subnetIds:
+      - subnet-031b7c29933630637
+      - subnet-0800c3b7ada3484f8
+      - subnet-05a88013af6fa1872
+      - subnet-059a80def7d2afbd9
+      - subnet-0cd15f43cc0ab8157
+      - subnet-09bfc943b3168ff09
+  events:
+    - httpApi:
+        path: /v1/title
+        method: post
+
+deleteTitle:
+  handler: mancomm-handler.deleteTitle
+  timeout: 29
+  vpc:
+    securityGroupIds:
+      - sg-05d87901ab73aadcd
+    subnetIds:
+      - subnet-031b7c29933630637
+      - subnet-0800c3b7ada3484f8
+      - subnet-05a88013af6fa1872
+      - subnet-059a80def7d2afbd9
+      - subnet-0cd15f43cc0ab8157
+      - subnet-09bfc943b3168ff09
+  events:
+    - httpApi:
+        path: /v1/title/{id}
+        method: delete
+
+updateDBStream:
+  handler: mancomm-handler.updateDBStream
+  timeout: 29
+  vpc:
+    securityGroupIds:
+      - sg-05d87901ab73aadcd
+    subnetIds:
+      - subnet-031b7c29933630637
+      - subnet-0800c3b7ada3484f8
+      - subnet-05a88013af6fa1872
+      - subnet-059a80def7d2afbd9
+      - subnet-0cd15f43cc0ab8157
+      - subnet-09bfc943b3168ff09
+  events:
+    - httpApi:
+        path: /v1/stream
+        method: put

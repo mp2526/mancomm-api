@@ -1,0 +1,71 @@
+org: mikeperry
+app: mancomm-service
+service: mancomm-service
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  environment: ${file(./config/common.yml):environment}
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Action:
+            - "ec2:CreateNetworkInterface"
+            - "ec2:DescribeNetworkInterfaces"
+            - "ec2:DescribeVpcs"
+            - "ec2:DeleteNetworkInterface"
+            - "ec2:DescribeSubnets"
+            - "ec2:DescribeSecurityGroups"
+            - "kms:Decrypt"
+          Resource:
+            - "*"
+        - Effect: 'Allow'
+          Action:
+            - "rds:DescribeDBClusters"
+            - "rds:DescribeDBClusterParameters"
+            - "rds:DescribeDBSubnetGroups"
+          Resource:
+            - "*"
+        - Effect: 'Allow'
+          Action:
+            - "secretsmanager:GetSecretValue"
+          Resource:
+            - "*"
+        - Effect: 'Allow'
+          Action:
+            - "s3:ListAllMyBuckets"
+            - "s3:ListBucket"
+            - "s3:GetBucketLocation"
+            - "s3:PutObject"
+            - "s3:GetObject"
+            - "s3:GetObjectVersion"
+            - "s3:DeleteObject"
+          Resource:
+            - "*"
+
+package:
+  patterns:
+    - ./global-bundle.pem
+
+plugins:
+  - serverless-functions-base-path
+  - serverless-esbuild
+  - serverless-offline
+
+custom:
+  functionsBasePath: handlers
+
+functions:
+  - ${file(./config/functions/mancomm.yml)}
+
+resources:
+  Resources:
+    mapping:
+      Type: AWS::Lambda::EventSourceMapping
+      Properties:
+        BatchSize: 10
+        EventSourceArn: "arn:aws:rds:us-east-1:381492003455:table/MyTable/stream"
+        FunctionName: "sl-pipeline-dev-main"
+        StartingPosition: LATEST
