@@ -1,6 +1,6 @@
 import { MancommPortalService } from "../../lib/mancommPortalService";
 export const getDocs = async (event, context) => {
-    const svc = new MancommPortalService();
+    const svc = await new MancommPortalService().init();
 
     try {
         const body = await svc.getDocs();
@@ -8,7 +8,8 @@ export const getDocs = async (event, context) => {
         return {
             statusCode: 200,
             headers: {
-                "content-type":"application/json"
+                "content-type":"application/json",
+                "Access-Control-Allow-Origin": "*"
             },
             body: JSON.stringify(body)
         };
@@ -16,13 +17,16 @@ export const getDocs = async (event, context) => {
         console.error("Error getting docs:", error);
         return {
             statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "*"
+            },
             body: "Internal server error - Failed to get docs"
         };
     }
 };
 
 export const getTitles = async (event, context) => {
-    const svc = new MancommPortalService();
+    const svc = await new MancommPortalService().init();
 
     try {
         const body = await svc.getTitles();
@@ -30,7 +34,8 @@ export const getTitles = async (event, context) => {
         return {
             statusCode: 200,
             headers: {
-                "content-type":"application/json"
+                "content-type":"application/json",
+                "Access-Control-Allow-Origin": "*"
             },
             body: JSON.stringify(body)
         };
@@ -38,13 +43,16 @@ export const getTitles = async (event, context) => {
         console.error('Error getting titles:', error);
         return {
             statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "*"
+            },
             body: "Internal server error - Failed to get titles"
         };
     }
 };
 
 export const getTitle = async (event, context) => {
-    const svc = new MancommPortalService();
+    const svc = await new MancommPortalService().init();
 
     try {
         let id;
@@ -59,13 +67,17 @@ export const getTitle = async (event, context) => {
             return {
                 statusCode: 200,
                 headers: {
-                    "content-type":"application/json"
+                    "content-type":"application/json",
+                    "Access-Control-Allow-Origin": "*"
                 },
                 body: JSON.stringify(body)
             };
         } else {
             return {
                 statusCode: 404,
+                headers: {
+                    "Access-Control-Allow-Origin": "*"
+                },
                 body: "Title not found"
             };
         }
@@ -74,6 +86,9 @@ export const getTitle = async (event, context) => {
         console.error('Error getting title:', error);
         return {
             statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "*"
+            },
             body: "Internal server error - Failed to get title"
         };
     }
@@ -81,7 +96,7 @@ export const getTitle = async (event, context) => {
 
 export const saveTitle = async (event, context) => {
     try {
-        const svc = new MancommPortalService();
+        const svc = await new MancommPortalService().init();
 
         const request = JSON.parse(event.body);
         const body = await svc.saveTitle(request.id, request.date);
@@ -89,7 +104,10 @@ export const saveTitle = async (event, context) => {
         return {
             statusCode: 200,
             headers: {
-                "content-type": "application/json"
+                "content-type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods" : "POST",
+                "Access-Control-Allow-Headers": "Content-Type"
             },
             body: JSON.stringify(body)
         };
@@ -103,7 +121,7 @@ export const saveTitle = async (event, context) => {
 };
 
 export const deleteTitle = async (event, context) => {
-    const svc = new MancommPortalService();
+    const svc = await new MancommPortalService().init();
 
     try {
         let id;
@@ -117,7 +135,8 @@ export const deleteTitle = async (event, context) => {
         return {
             statusCode: 200,
             headers: {
-                "content-type":"application/json"
+                "content-type":"application/json",
+                "Access-Control-Allow-Origin": "*"
             },
             body: JSON.stringify(body)
         };
@@ -125,13 +144,59 @@ export const deleteTitle = async (event, context) => {
         console.error('Error deleting title:', error);
         return {
             statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "*"
+            },
             body: "Internal server error - Failed to delete title"
         };
     }
 };
 
+export const downloadTitle = async (event, context) => {
+    const svc = await new MancommPortalService().init();
+
+    try {
+        let id;
+
+        if(event.pathParameters != null) {
+            id = event.pathParameters.id;
+        }
+
+        const body = await svc.downloadTitle(id);
+
+        if(body) {
+            return {
+                statusCode: 200,
+                headers: {
+                    "content-type":"application/json",
+                    "Access-Control-Allow-Origin": "*"
+                },
+                body: JSON.stringify(body)
+            };
+        } else {
+            return {
+                statusCode: 404,
+                headers: {
+                    "Access-Control-Allow-Origin": "*"
+                },
+                body: "Title not found"
+            };
+        }
+
+    } catch (error) {
+        console.error('Error getting title:', error);
+        return {
+            statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "*"
+            },
+            body: "Internal server error - Failed to get title"
+        };
+    }
+};
+
 export const updateDBStream = async (event, context) => {
-    const svc = new MancommPortalService();
+    const svc = await new MancommPortalService().init();
 
     try {
         const request = JSON.parse(event.body);
@@ -154,5 +219,15 @@ export const updateDBStream = async (event, context) => {
             statusCode: 500,
             body: "Internal server error - Failed to update stream"
         };
+    }
+};
+
+export const processDBStream = async (changeStream) => {
+    const svc = await new MancommPortalService().init();
+
+    try {
+        await svc.processDBStream(changeStream);
+    } catch (error) {
+        console.error('Error updating stream:', error);
     }
 };

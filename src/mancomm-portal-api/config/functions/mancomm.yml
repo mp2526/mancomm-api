@@ -1,9 +1,10 @@
 getDocs:
   handler: mancomm-handler.getDocs
   events:
-    - httpApi:
+    - http:
         path: /v1/docs
         method: get
+        cors: true
 
 getTitles:
   handler: mancomm-handler.getTitles
@@ -19,9 +20,10 @@ getTitles:
       - subnet-0cd15f43cc0ab8157
       - subnet-09bfc943b3168ff09
   events:
-    - httpApi:
+    - http:
         path: /v1/titles
         method: get
+        cors: true
 
 getTitle:
   handler: mancomm-handler.getTitle
@@ -37,9 +39,10 @@ getTitle:
       - subnet-0cd15f43cc0ab8157
       - subnet-09bfc943b3168ff09
   events:
-    - httpApi:
+    - http:
         path: /v1/title/{id}
         method: get
+        cors: true
 
 saveTitle:
   handler: mancomm-handler.saveTitle
@@ -55,9 +58,10 @@ saveTitle:
       - subnet-0cd15f43cc0ab8157
       - subnet-09bfc943b3168ff09
   events:
-    - httpApi:
+    - http:
         path: /v1/title
         method: post
+        cors: true
 
 deleteTitle:
   handler: mancomm-handler.deleteTitle
@@ -73,9 +77,29 @@ deleteTitle:
       - subnet-0cd15f43cc0ab8157
       - subnet-09bfc943b3168ff09
   events:
-    - httpApi:
+    - http:
         path: /v1/title/{id}
         method: delete
+        cors: true
+
+downloadTitle:
+  handler: mancomm-handler.downloadTitle
+  timeout: 29
+  vpc:
+    securityGroupIds:
+      - sg-05d87901ab73aadcd
+    subnetIds:
+      - subnet-031b7c29933630637
+      - subnet-0800c3b7ada3484f8
+      - subnet-05a88013af6fa1872
+      - subnet-059a80def7d2afbd9
+      - subnet-0cd15f43cc0ab8157
+      - subnet-09bfc943b3168ff09
+  events:
+    - http:
+        path: /v1/download/title/{id}
+        method: get
+        cors: true
 
 updateDBStream:
   handler: mancomm-handler.updateDBStream
@@ -91,6 +115,21 @@ updateDBStream:
       - subnet-0cd15f43cc0ab8157
       - subnet-09bfc943b3168ff09
   events:
-    - httpApi:
+    - http:
         path: /v1/stream
         method: put
+        cors: true
+
+processDBStream:
+  handler: mancomm-handler.processDBStream
+  timeout: 300
+  vpc:
+    securityGroupIds:
+      - sg-05d87901ab73aadcd
+    subnetIds:
+      - subnet-031b7c29933630637
+      - subnet-0800c3b7ada3484f8
+      - subnet-05a88013af6fa1872
+      - subnet-059a80def7d2afbd9
+      - subnet-0cd15f43cc0ab8157
+      - subnet-09bfc943b3168ff09

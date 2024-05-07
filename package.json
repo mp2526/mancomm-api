@@ -2,6 +2,9 @@
   "name": "mancomm-service",
   "dependencies": {
     "@aws-sdk/client-docdb": "3.569.0",
+    "@aws-sdk/client-s3": "3.569.0",
+    "@aws-sdk/client-secrets-manager": "3.569.0",
+    "@aws-sdk/s3-request-presigner": "3.569.0",
     "axios": "1.6.8",
     "mongodb": "6.6.0"
   },

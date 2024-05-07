@@ -1,5 +1,1 @@
 environment:
-  DOCDB_USERNAME: ""
-  DOCDB_PASSWORD: ""
-  DOCDB_ENDPOINT: ""
-  DOCDB_PORT: ""

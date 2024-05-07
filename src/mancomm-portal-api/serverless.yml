@@ -1,12 +1,11 @@
 org: mikeperry
 app: mancomm-service
 service: mancomm-service
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
   runtime: nodejs18.x
-  environment: ${file(./config/common.yml):environment}
   iam:
     role:
       statements:
@@ -63,9 +62,20 @@ functions:
 resources:
   Resources:
     mapping:
+      DependsOn:
+        - ProcessDBStreamLambdaFunction
       Type: AWS::Lambda::EventSourceMapping
       Properties:
         BatchSize: 10
-        EventSourceArn: "arn:aws:rds:us-east-1:381492003455:table/MyTable/stream"
-        FunctionName: "sl-pipeline-dev-main"
-        StartingPosition: LATEST
+        EventSourceArn: "arn:aws:rds:us-east-1:381492003455:cluster:docdb-2024-05-04-19-41-26"
+        FunctionName:
+          "Fn::GetAtt": [ ProcessDBStreamLambdaFunction, Arn ]
+        StartingPosition: "LATEST"
+        DocumentDBEventSourceConfig:
+          CollectionName: "titles"
+          DatabaseName: "mancommdb"
+          FullDocument: "Default"
+        SourceAccessConfigurations:
+          - Type: "BASIC_AUTH"
+            URI: "arn:aws:secretsmanager:us-east-1:381492003455:secret:mancommdb-iZW46E"
+        Enabled: true

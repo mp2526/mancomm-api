@@ -1,8 +1,22 @@
 import {MongoClient, ObjectId} from "mongodb";
+import {
+    GetSecretValueCommand,
+    SecretsManagerClient,
+} from "@aws-sdk/client-secrets-manager";
 
 export class DataService {
-    constructor() {
-        this.uri = `mongodb://${process.env.DOCDB_USERNAME}:${process.env.DOCDB_PASSWORD}@${process.env.DOCDB_ENDPOINT}:${process.env.DOCDB_PORT}/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`;
+    async init() {
+        const client = new SecretsManagerClient();
+        const response = await client.send(
+            new GetSecretValueCommand({
+                SecretId: "mancommdb",
+            }),
+        );
+
+        const secret = JSON.parse(response.SecretString);
+
+        this.uri = `mongodb://${secret.username}:${secret.password}@${secret.host}:${secret.port}/?tls=true&tlsCAFile=global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false`;
+        return this;
     }
 
     async getTitles(){
@@ -104,7 +118,8 @@ export class DataService {
             const collection = db.collection("titles");
 
             console.log("DB connected");
-            await db.admin().command({
+
+            await db.adminCommand({
                 ...request,
                 modifyChangeStreams: 1,
                 database: "mancommdb",
