@@ -101,9 +101,10 @@ downloadTitle:
         method: get
         cors: true
 
-updateDBStream:
-  handler: mancomm-handler.updateDBStream
-  timeout: 29
+processTitle:
+  handler: mancomm-handler.processTitle
+  timeout: 900
+  memorySize: 2048
   vpc:
     securityGroupIds:
       - sg-05d87901ab73aadcd
@@ -115,10 +116,11 @@ updateDBStream:
       - subnet-0cd15f43cc0ab8157
       - subnet-09bfc943b3168ff09
   events:
-    - http:
-        path: /v1/stream
-        method: put
-        cors: true
+    - s3:
+        bucket: mancomm-us-east-1-watch
+        event: s3:ObjectCreated:*
+        existing: true
+        forceDeploy: true
 
 processDBStream:
   handler: mancomm-handler.processDBStream
@@ -133,3 +135,10 @@ processDBStream:
       - subnet-059a80def7d2afbd9
       - subnet-0cd15f43cc0ab8157
       - subnet-09bfc943b3168ff09
+
+downloadEvent:
+  handler: mancomm-handler.downloadEvent
+  timeout: 900
+  description: Title download event from SQS
+  events:
+    - sqs: arn:aws:sqs:us-east-1:381492003455:mancomm-download.fifo

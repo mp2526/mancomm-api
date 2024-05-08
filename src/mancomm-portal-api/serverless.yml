@@ -43,6 +43,11 @@ provider:
             - "s3:DeleteObject"
           Resource:
             - "*"
+        - Effect: 'Allow'
+          Action:
+            - "sqs:sendmessage"
+          Resource:
+            - "arn:aws:sqs:us-east-1:381492003455:mancomm-download.fifo"
 
 package:
   patterns:

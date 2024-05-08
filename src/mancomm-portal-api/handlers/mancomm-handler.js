@@ -1,4 +1,6 @@
 import { MancommPortalService } from "../../lib/mancommPortalService";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+
 export const getDocs = async (event, context) => {
     const svc = await new MancommPortalService().init();
 
@@ -96,10 +98,17 @@ export const getTitle = async (event, context) => {
 
 export const saveTitle = async (event, context) => {
     try {
-        const svc = await new MancommPortalService().init();
-
+        const sqs = new SQSClient({});
         const request = JSON.parse(event.body);
-        const body = await svc.saveTitle(request.id, request.date);
+
+        const response = await sqs.send(new SendMessageCommand({
+            QueueUrl: "https://sqs.us-east-1.amazonaws.com/381492003455/mancomm-download.fifo",
+            DelaySeconds: 0,
+            MessageDeduplicationId: `${request.id}-${request.date}-${new Date().getTime()}`,
+            MessageGroupId: "mancomm-download",
+            MessageBody: event.body
+        }));
+        console.log(response);
 
         return {
             statusCode: 200,
@@ -109,7 +118,7 @@ export const saveTitle = async (event, context) => {
                 "Access-Control-Allow-Methods" : "POST",
                 "Access-Control-Allow-Headers": "Content-Type"
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(response)
         };
     } catch (error) {
         console.error("Error saving title:", error);
@@ -195,30 +204,16 @@ export const downloadTitle = async (event, context) => {
     }
 };
 
-export const updateDBStream = async (event, context) => {
+export const processTitle = async (event, context) => {
     const svc = await new MancommPortalService().init();
 
+    const bucket = event.Records[0].s3.bucket.name;
+    const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
+
     try {
-        const request = JSON.parse(event.body);
-
-        const body = await svc.updateDBStream(request);
-
-        if(body) {
-            return {
-                statusCode: 200,
-                headers: {
-                    "content-type":"application/json"
-                },
-                body: JSON.stringify(body)
-            };
-        }
-
+        await svc.processTitle(bucket, key);
     } catch (error) {
-        console.error('Error updating stream:', error);
-        return {
-            statusCode: 500,
-            body: "Internal server error - Failed to update stream"
-        };
+        console.error('Error processing title:', error);
     }
 };
 
@@ -229,5 +224,16 @@ export const processDBStream = async (changeStream) => {
         await svc.processDBStream(changeStream);
     } catch (error) {
         console.error('Error updating stream:', error);
+    }
+};
+
+export const downloadEvent = async (event, context) => {
+    for (const record of event.Records) {
+        const { body } = record;
+        console.info(body);
+        const request = JSON.parse(body);
+        const svc = await new MancommPortalService().init();
+
+        await svc.saveTitle(request.id, request.date);
     }
 };
