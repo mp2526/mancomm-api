@@ -1,92 +1,114 @@
 <!--
-title: 'AWS Simple HTTP Endpoint example in NodeJS'
-description: 'This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.'
+title: 'Mancomm Portal API Service'
+description: 'RESTful API for managing document storage and presentation'
 layout: Doc
 framework: v3
 platform: AWS
 language: nodeJS
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
+authorLink: 'https://github.com/mp2526'
+authorName: 'Mike Perry'
+authorAvatar: ''
 -->
 
-# Serverless Framework Node HTTP API on AWS
+# Mancomm Portal API Service
 
-This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.
+This is a RESTful API written using Node.js / Javascript and AWS serverless stack. (Lambdas, API Gateway, DocumentDB, S3, and SQS)
 
-This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes Typescript, Mongo, DynamoDB and other examples.
+### Design
+
+This API includes endpoints for CRUD functionality to asyncronously download a federal regulations HTML document and parse it and save it as several JSON document fragments into a DocumentDB datastore as well as saving a compiled version onto S3.
+
+It is reliant upon an SQS queue for downloading relatively large documents to an S3 watch bucket without timing out. It also uses an S3 trigger to asynchronously parse the downloaded HTML into JSON fragments and store the resulting JSON into DocumentDB as related collections.
+Utilizing a trigger on the DocumentDB change stream, the JSON collections are then compiled and merged into a single JSON document and saved to a separate bucket on S3 for download or display.
+
+### Limitations
+
+This is not a complete production ready API. This is more of a proof of concept with some production ready features missing, such as:
+
+* **Authentication** - The endpoints are publicly available and require no authentication. In a production environment I would utilize either a token key or something like a JWT OAuth scenario to lock down the endpoints.
+* **Failover Redundancy** - This POC is only deployed to one AWS region and the DocumentDB cluster contains only one instance. In a production environment I would deploy to multi region and possibly multi AZs within a region. The DocumentDB cluster would consist of a write and multi read instances and the S3 storage would be multi region as well as everything backed up.
+* **Code Quality** - While I tried to write the code as I would for a production app, due to time constraints I did take some shortcuts...
+  * **Error Handling** - The current error handling is very basic.
+  * **Unit Tests** - Normally I would have started with unit tests and written the code based on my unit test assumptions
+  * **HTML Parser** - The html parser could use some attention. It misses some of the HTML attributes, but I think gets enough of them to get the point across.
+  * **Infrastructure As Code** - Some of the Serverless scripts are lacking and some of the infrastructure is hardcoded or done manually to save time.
 
 ## Usage
 
 ### Deployment
 
+The code is deployed via Serverless scripts and using the Serverless CLI.
 ```
 $ serverless deploy
 ```
 
-After deploying, you should see output similar to:
+After deploying, the API is now available at the following URL:
 
-```bash
-Deploying aws-node-http-api-project to stage dev (us-east-1)
-
-✔ Service deployed to stack aws-node-http-api-project-dev (152s)
-
-endpoint: GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
-functions:
-  hello: aws-node-http-api-project-dev-hello (1.9 kB)
-```
-
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [http event docs](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/).
+https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1
 
 ### Invocation
 
-After successful deployment, you can call the created application via HTTP:
+You can call the created application via HTTP:
 
 ```bash
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
+curl https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1/
 ```
 
-Which should result in response similar to the following (removed `input` content for brevity):
+### API Definition
 
-```json
+#### Get HTML document:
+```
+ GET https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1/docs
+```
+
+Gets a list of available federal regulation documents from the following URL:
+
+https://www.ecfr.gov/api/renderer/v1/content/enhanced/${date}/title-${id}
+
+It is currently limited to Title 2 and Title 29 for this demo.
+<br>
+<br>
+<br>
+#### Save HTML document to S3:
+```
+ POST https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1/title
+ 
 {
-  "message": "Go Serverless v2.0! Your function executed successfully!",
-  "input": {
-    ...
-  }
+    "id": 2,
+    "date": "2024-05-02"
 }
 ```
 
-### Local development
-
-You can invoke your function locally by using the following command:
-
-```bash
-serverless invoke local --function hello
+Posts a message to an SQS queue that allows the service to asynchronously download the HTML document.
+<br>
+<br>
+<br>
+#### Get a list of documents saved to the DocumentDB
 ```
-
-Which should result in response similar to the following:
-
+ GET https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1/titles
 ```
-{
-  "statusCode": 200,
-  "body": "{\n  \"message\": \"Go Serverless v3.0! Your function executed successfully!\",\n  \"input\": \"\"\n}"
-}
+Gets a list of the available parsed JSON documents saved in the DocumentDB.
+<br>
+<br>
+<br>
+#### Get a single document
 ```
-
-
-Alternatively, it is also possible to emulate API Gateway and Lambda locally by using `serverless-offline` plugin. In order to do that, execute the following command:
-
-```bash
-serverless plugin install -n serverless-offline
+ GET https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1/title/:id
 ```
-
-It will add the `serverless-offline` plugin to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`.
-
-After installation, you can start local emulation with:
-
+Gets a single document given an id from the previous list.
+<br>
+<br>
+<br>
+#### Deletes a single document
 ```
-serverless offline
+ DELETE https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1/title/:id
 ```
-
-To learn more about the capabilities of `serverless-offline`, please refer to its [GitHub repository](https://github.com/dherault/serverless-offline).
+Deletes a single document given an id as well as deleting the compiled S3 document.
+<br>
+<br>
+<br>
+#### Get a download link
+```
+ GET https://8pwdhsk1hl.execute-api.us-east-1.amazonaws.com/dev/v1/download/title/:id
+```
+Gets a signed S3 URL with a 60 second expiry of the compiled JSON document for downloading.
